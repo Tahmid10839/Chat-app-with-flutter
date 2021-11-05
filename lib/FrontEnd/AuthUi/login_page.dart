@@ -1,6 +1,6 @@
 import 'package:chat_app2/BackEnd/Firebase/Auth/google_auth.dart';
 import 'package:chat_app2/BackEnd/Firebase/Auth/signup_auth.dart';
-import 'package:chat_app2/FrontEnd/AuthUi/login_page.dart';
+import 'package:chat_app2/FrontEnd/AuthUi/signup_page.dart';
 import 'package:chat_app2/FrontEnd/home_page.dart';
 import 'package:chat_app2/Global_Uses/enum_signup.dart';
 import 'package:chat_app2/Global_Uses/reg_exp.dart';
@@ -8,24 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 
-class SignUpPage extends StatefulWidget {
-  SignUpPage({Key? key}) : super(key: key);
-
+class LoginPage extends StatefulWidget {
   @override
-  _SignUpPageState createState() => _SignUpPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
-  final GlobalKey<FormState> _signUpKey = GlobalKey<FormState>();
+class _LoginPageState extends State<LoginPage> {
+  final GlobalKey<FormState> _loginKey = GlobalKey<FormState>();
 
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
-  final TextEditingController confirmPassword = TextEditingController();
-
-  bool _isPassObscure = true;
-  bool _isConObscure = true;
-
-  String pass = "";
 
   final EmailAndPasswordAuth emailAndPasswordAuth = EmailAndPasswordAuth();
 
@@ -33,6 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   final GoogleAuth googleAuth = GoogleAuth();
 
+  bool _isPassObscure = true;
   Widget _commonTextFormField(
       {required String hintText,
       required IconData icon,
@@ -43,11 +36,7 @@ class _SignUpPageState extends State<SignUpPage> {
       child: TextFormField(
         validator: validator,
         controller: textEditingController,
-        obscureText: hintText == "Password"
-            ? _isPassObscure
-            : hintText == "Confirm Password"
-                ? _isConObscure
-                : false,
+        obscureText: hintText == "Password" ? _isPassObscure : false,
         decoration: InputDecoration(
           border: OutlineInputBorder(
             borderSide: const BorderSide(
@@ -81,25 +70,13 @@ class _SignUpPageState extends State<SignUpPage> {
                     });
                   },
                 )
-              : hintText == "Confirm Password"
-                  ? IconButton(
-                      icon: Icon(
-                        _isConObscure ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.deepPurple,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isConObscure = !_isConObscure;
-                        });
-                      },
-                    )
-                  : const SizedBox.shrink(),
+              : const SizedBox.shrink(),
         ),
       ),
     );
   }
 
-  Widget _signUpButton() {
+  Widget _loginButton() {
     return Padding(
       padding: const EdgeInsets.only(
           left: 20.0, right: 20.0, bottom: 30.0, top: 20.0),
@@ -114,12 +91,13 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
         child: const Text(
-          "Sign Up",
+          "Login",
           style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
         ),
         onPressed: () async {
-          if (_signUpKey.currentState!.validate()) {
+          if (_loginKey.currentState!.validate()) {
             print("Validated");
+            SystemChannels.textInput.invokeMethod('TextInput.hide');
 
             if (mounted) {
               setState(() {
@@ -127,21 +105,28 @@ class _SignUpPageState extends State<SignUpPage> {
               });
             }
 
-            SystemChannels.textInput.invokeMethod('TextInput.hide');
-
-            final EmailSignUpResults response = await emailAndPasswordAuth
-                .signUpAuth(email: email.text, password: password.text);
-
-            if (response == EmailSignUpResults.SignUpCompleted) {
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => LoginPage()));
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Sign Up Successful")));
+            String msg = '';
+            final EmailSignInResults emailSignInResults =
+                await emailAndPasswordAuth.signInWithEmailAndPassword(
+                    email: email.text, password: password.text);
+            if (emailSignInResults == EmailSignInResults.SignInCompleted) {
+              msg = "Login Successful";
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => HomePage()),
+                  (route) => false);
+            } else if (emailSignInResults ==
+                EmailSignInResults.EmailNotVerified) {
+              msg =
+                  "Email is not verified.\nPlease verify your email and then login";
+            } else if (emailSignInResults ==
+                EmailSignInResults.EmailOrPasswordInvalid) {
+              msg = "Email or Password is not valid";
             } else {
-              final String msg =
-                  response == EmailSignUpResults.EmailAlreadyPresent
-                      ? "Email is already presented"
-                      : "Sign Up not completed";
+              msg = "Login is not completed";
+            }
+
+            if (msg != '') {
               ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text(msg)));
             }
@@ -229,12 +214,12 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _switchToLogin() {
+  Widget _switchToSignUp() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
-          "Already have an account?",
+          "Don't have an account?",
           style: TextStyle(fontSize: 16.0, color: Colors.black),
         ),
         ElevatedButton(
@@ -242,10 +227,10 @@ class _SignUpPageState extends State<SignUpPage> {
               ElevatedButton.styleFrom(primary: Colors.white, elevation: 0.0),
           onPressed: () {
             Navigator.push(
-                context, MaterialPageRoute(builder: (_) => LoginPage()));
+                context, MaterialPageRoute(builder: (_) => SignUpPage()));
           },
           child: const Text(
-            "Login ",
+            "Sign Up",
             style: TextStyle(color: Colors.deepPurple, fontSize: 16.0),
           ),
         ),
@@ -272,7 +257,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const Center(
                     child: Text(
-                      "Sign Up",
+                      "Login",
                       style: TextStyle(
                         fontSize: 28.0,
                         fontWeight: FontWeight.bold,
@@ -284,7 +269,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Column(
                       children: [
                         Form(
-                          key: _signUpKey,
+                          key: _loginKey,
                           child: Column(
                             children: [
                               _commonTextFormField(
@@ -304,8 +289,6 @@ class _SignUpPageState extends State<SignUpPage> {
                                   hintText: "Password",
                                   icon: Icons.lock,
                                   validator: (String? inputVal) {
-                                    pass = inputVal.toString();
-
                                     if (inputVal!.isEmpty) {
                                       return "Password can not be empty";
                                     } else if (inputVal.length < 6) {
@@ -314,26 +297,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                     return null;
                                   },
                                   textEditingController: password),
-                              _commonTextFormField(
-                                  hintText: "Confirm Password",
-                                  icon: Icons.lock,
-                                  validator: (String? inputVal) {
-                                    if (inputVal!.isEmpty) {
-                                      return "Confirm Password can not be empty";
-                                    } else if (inputVal.length < 6) {
-                                      return "Confirm Password must be at least 6 characters";
-                                    } else if (pass != inputVal.toString()) {
-                                      return "Password does not match";
-                                    }
-                                    return null;
-                                  },
-                                  textEditingController: confirmPassword),
-                              _signUpButton(),
+                              _loginButton(),
                             ],
                           ),
                         ),
                         const SizedBox(
-                          height: 30.0,
+                          height: 40.0,
                         ),
                         const Center(
                           child: Text(
@@ -343,9 +312,9 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         _socialMediaIntegrationButton(),
                         const SizedBox(
-                          height: 10.0,
+                          height: 30.0,
                         ),
-                        _switchToLogin(),
+                        _switchToSignUp(),
                       ],
                     ),
                   ),
