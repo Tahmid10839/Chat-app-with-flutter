@@ -1,9 +1,14 @@
+import 'package:chat_app2/BackEnd/Firebase/Auth/fb_auth.dart';
 import 'package:chat_app2/BackEnd/Firebase/Auth/google_auth.dart';
 import 'package:chat_app2/BackEnd/Firebase/Auth/signup_auth.dart';
+import 'package:chat_app2/BackEnd/Firebase/CloudFirestoreDatabase/new_user_data.dart';
 import 'package:chat_app2/FrontEnd/AuthUi/login_page.dart';
+import 'package:chat_app2/FrontEnd/MainScreen/main_screen.dart';
+import 'package:chat_app2/FrontEnd/NewUserEntry/new_user_entry.dart';
 import 'package:chat_app2/FrontEnd/home_page.dart';
 import 'package:chat_app2/Global_Uses/enum_signup.dart';
 import 'package:chat_app2/Global_Uses/reg_exp.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -32,6 +37,8 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isLoading = false;
 
   final GoogleAuth googleAuth = GoogleAuth();
+  final FacebookAuthentication _facebookAuthentication =
+      FacebookAuthentication();
 
   Widget _commonTextFormField(
       {required String hintText,
@@ -195,10 +202,31 @@ class _SignUpPageState extends State<SignUpPage> {
                   .showSnackBar(SnackBar(content: Text(msg)));
 
               if (googleSignInResults == GoogleSignInResults.SignInCompleted) {
-                Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => HomePage()),
-                    (route) => false);
+                // Navigator.pushAndRemoveUntil(
+                //     context,
+                //     MaterialPageRoute(builder: (_) => HomePage()),
+                //     (route) => false);
+                final CloudFirestoreDataManagement
+                    cloudFirestoreDataManagement =
+                    CloudFirestoreDataManagement();
+                final bool response =
+                    await cloudFirestoreDataManagement.userRecordPresentOrNot(
+                        email: FirebaseAuth.instance.currentUser!.email
+                            .toString());
+                response
+                    ? Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => MainScreen()),
+                        (route) => false)
+                    : Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => TakePrimaryUserData()),
+                        (route) => false);
+                // Navigator.pushAndRemoveUntil(
+                //     context,
+                //     MaterialPageRoute(builder: (_) => TakePrimaryUserData()),
+                //     (route) => false);
               }
 
               if (mounted) {
@@ -216,8 +244,66 @@ class _SignUpPageState extends State<SignUpPage> {
             width: 30.0,
           ),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               print("Facebook Pressed");
+
+              if (mounted) {
+                setState(() {
+                  _isLoading = true;
+                });
+              }
+
+              String msg = '';
+              final FbSignInResults fbSignInResults =
+                  await _facebookAuthentication.facebookLogIn();
+
+              if (fbSignInResults == FbSignInResults.SignInCompleted) {
+                msg = 'Login Successful';
+              } else if (fbSignInResults == FbSignInResults.AlreadySignedIn) {
+                msg = 'Already Facebook Signed In';
+              } else if (fbSignInResults ==
+                  FbSignInResults.SignInNotCompleted) {
+                msg = 'Sign In not completed';
+              } else {
+                msg = 'Unexpected Error';
+              }
+
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(msg)));
+
+              if (fbSignInResults == FbSignInResults.SignInCompleted) {
+                // Navigator.pushAndRemoveUntil(
+                //     context,
+                //     MaterialPageRoute(builder: (_) => HomePage()),
+                //     (route) => false);
+                final CloudFirestoreDataManagement
+                    cloudFirestoreDataManagement =
+                    CloudFirestoreDataManagement();
+                final bool response =
+                    await cloudFirestoreDataManagement.userRecordPresentOrNot(
+                        email: FirebaseAuth.instance.currentUser!.email
+                            .toString());
+                response
+                    ? Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => MainScreen()),
+                        (route) => false)
+                    : Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => TakePrimaryUserData()),
+                        (route) => false);
+                // Navigator.pushAndRemoveUntil(
+                //     context,
+                //     MaterialPageRoute(builder: (_) => TakePrimaryUserData()),
+                //     (route) => false);
+              }
+
+              if (mounted) {
+                setState(() {
+                  _isLoading = false;
+                });
+              }
             },
             child: Image.asset(
               "assets/images/fbook.png",
@@ -260,7 +346,7 @@ class _SignUpPageState extends State<SignUpPage> {
         backgroundColor: Colors.white,
         body: LoadingOverlay(
           isLoading: _isLoading,
-          color: Colors.black,
+          color: Colors.black54,
           child: GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Container(

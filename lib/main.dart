@@ -1,6 +1,8 @@
 import 'package:chat_app2/FrontEnd/AuthUi/login_page.dart';
 import 'package:chat_app2/FrontEnd/AuthUi/signup_page.dart';
+import 'package:chat_app2/FrontEnd/NewUserEntry/new_user_entry.dart';
 import 'package:chat_app2/FrontEnd/SplashScreen/splash_screen.dart';
+import 'package:chat_app2/FrontEnd/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -20,8 +22,10 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.deepPurple,
       ),
       // home: SignUpPage(),
-      home: LoginPage(),
-      // home: SplashScreen(),
+      // home: LoginPage(),
+      // home: HomePage(),
+      home: SplashScreen(),
+      // home: TakePrimaryUserData(),
     );
   }
 }
