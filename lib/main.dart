@@ -1,5 +1,6 @@
 import 'package:chat_app2/FrontEnd/AuthUi/login_page.dart';
 import 'package:chat_app2/FrontEnd/AuthUi/signup_page.dart';
+import 'package:chat_app2/FrontEnd/MainScreen/main_screen.dart';
 import 'package:chat_app2/FrontEnd/NewUserEntry/new_user_entry.dart';
 import 'package:chat_app2/FrontEnd/SplashScreen/splash_screen.dart';
 import 'package:chat_app2/FrontEnd/home_page.dart';
@@ -24,7 +25,8 @@ class MyApp extends StatelessWidget {
       // home: SignUpPage(),
       // home: LoginPage(),
       // home: HomePage(),
-      home: SplashScreen(),
+      // home: SplashScreen(),
+      home: MainScreen(),
       // home: TakePrimaryUserData(),
     );
   }
